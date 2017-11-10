@@ -11,18 +11,19 @@ class Thread
     /**
      * @param {Function} threaded_function
      */
-    constructor (threaded_function)
+    constructor (threaded_function, resolve_paths)
     {
         Object.defineProperty(this, '$', {enumerable: false, value: {}});
 
-        this.$._thread_f  = threaded_function.toString();
-        this.$._thread_i  = require('./ThreadInitializer').toString();
-        this.$._thread_f  = this.$._thread_f.slice(this.$._thread_f.indexOf("{") + 1, this.$._thread_f.lastIndexOf("}"));
-        this.$._thread_i  = this.$._thread_i.slice(this.$._thread_i.indexOf("{") + 1, this.$._thread_i.lastIndexOf("}"));
-        this.$._blob      = new Blob([this.$._thread_i], {type: 'application/javascript'});
-        this.$._running   = false;
-        this.$._instance  = undefined;
-        this.$._listeners = {};
+        this.$._thread_f      = threaded_function.toString();
+        this.$._thread_i      = require('./ThreadInitializer').toString();
+        this.$._thread_f      = this.$._thread_f.slice(this.$._thread_f.indexOf('{') + 1, this.$._thread_f.lastIndexOf('}'));
+        this.$._thread_i      = this.$._thread_i.slice(this.$._thread_i.indexOf('{') + 1, this.$._thread_i.lastIndexOf('}'));
+        this.$._blob          = new Blob([this.$._thread_i], {type: 'application/javascript'});
+        this.$._resolve_paths = (typeof resolve_paths === 'string' ? [resolve_paths] : resolve_paths) || [];
+        this.$._running       = false;
+        this.$._instance      = undefined;
+        this.$._listeners     = {};
     }
 
     /**
@@ -34,20 +35,25 @@ class Thread
             throw new Error('Thread already started.');
         }
 
+        let resolve_paths = module.paths;
+        this.$._resolve_paths.forEach((p) => {
+            resolve_paths.unshift(p);
+        });
+
         this.$._instance = new Worker(window.URL.createObjectURL(this.$._blob));
         this.$._instance.postMessage({
-            type         : '--init',
-            module_paths : module.paths,
-            thread_fn    : this.$._thread_f
+            type:         '--init',
+            module_paths: resolve_paths,
+            thread_fn:    this.$._thread_f
         });
         this.$._instance.onmessage = (e) => {
             (this.$._listeners[e.data.type] || []).forEach((listener) => {
                 listener(e.data.data);
             });
         };
-        this.$._instance.onerror = (e) => {
+        this.$._instance.onerror   = (e) => {
             throw e;
-        }
+        };
     }
 
     /**
@@ -70,11 +76,11 @@ class Thread
      */
     send (type, data)
     {
-        if (! this.$._instance) {
+        if (!this.$._instance) {
             this.start();
         }
 
-        this.$._instance.postMessage({ type: type, data: data });
+        this.$._instance.postMessage({type: type, data: data});
     }
 
     /**
@@ -92,7 +98,7 @@ class Thread
      */
     terminate ()
     {
-        if (! this.$._instance) {
+        if (!this.$._instance) {
             return;
         }
 

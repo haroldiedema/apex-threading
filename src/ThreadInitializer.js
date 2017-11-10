@@ -10,16 +10,28 @@ let onmessage;
 
 module.exports = function () {
 
+    function uuidv4 ()
+    {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     let Thread = {
-        __self              : null,
-        __message_listeners : {}
+        __self:              null,
+        __message_listeners: {}
     };
 
     onmessage = function (e) {
         // Initializer
         if (typeof e.data === 'object' && e.data.type === '--init' && Thread.__self === null) {
             if (typeof module !== 'undefined') {
-                module.paths = e.data.module_paths;
+                let id          = uuidv4();
+                module.paths    = e.data.module_paths;
+                module.path     = require('path').parse(e.data.module_paths[0]).dir;
+                module.id       = module.path + '/' + id;
+                module.filename = module.path + '/' + id;
             }
             Thread.__self = new Function('on, emit', e.data.thread_fn);
             Thread.__self.call(
