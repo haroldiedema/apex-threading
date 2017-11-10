@@ -31,10 +31,7 @@ Threading.ThreadPool.spawn('t2', t);
 Threading.ThreadPool.spawn('t3', t);
 Threading.ThreadPool.spawn('t4', t);
 
-Threading.ThreadPool.get('t1').on('result', (data) => { console.log('THREAD 1: ', data); });
-Threading.ThreadPool.get('t2').on('result', (data) => { console.log('THREAD 2: ', data); });
-Threading.ThreadPool.get('t3').on('result', (data) => { console.log('THREAD 3: ', data); });
-Threading.ThreadPool.get('t4').on('result', (data) => { console.log('THREAD 4: ', data); });
+Threading.ThreadPool.on('result', (data) => { console.log(data); });
 
 function run () {
     Threading.ThreadPool.get('t1').send('prime', 65535000);

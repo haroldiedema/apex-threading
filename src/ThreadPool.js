@@ -6,11 +6,11 @@
  * ----------------------------------------------------- /_*/
 'use strict';
 
-const Thread    = require('./Thread'),
-      __threads = {};
+const Thread      = require('./Thread'),
+      __threads   = {},
+      __listeners = {};
 
 module.exports = {
-
     /**
      * Spawns a new thread with the given identifier and function.
      *
@@ -23,6 +23,13 @@ module.exports = {
             throw new Error('Another thread with the identifier "' + identifier + '" is already present.');
         }
         __threads[identifier] = new Thread(thread_function);
+
+        // Add global listeners to the newly spawned thread.
+        Object.keys(__listeners).forEach((type) => {
+            __listeners[type].forEach((callback) => {
+                __threads[identifier].on(type, callback);
+            });
+        });
     },
 
     /**
@@ -57,5 +64,35 @@ module.exports = {
         }
 
         delete __threads[identifier];
+    },
+
+    /**
+     * Stops and removes all active threads.
+     */
+    removeAll ()
+    {
+        Object.keys(__threads).forEach((id) => {
+            if (__threads[id].isRunning()) {
+                __threads[id].stop();
+            }
+            delete __threads[id];
+        });
+    },
+
+    /**
+     * @param {String}   type
+     * @param {Function} callback
+     */
+    on (type, callback)
+    {
+        if (typeof __listeners[type] === 'undefined') {
+            __listeners[type] = [];
+        }
+        __listeners[type].push(callback);
+
+        // Assign listener to existing threads.
+        Object.values(__threads).forEach((thread) => {
+            thread.on(type, callback);
+        });
     }
 };
