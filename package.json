@@ -1,0 +1,15 @@
+{
+  "name": "apex-threading",
+  "description": "Apex Framework: Threading Component",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": {
+    "name": "Harold Iedema",
+    "email": "harold@iedema.me"
+  },
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^1.8.1"
+  }
+}

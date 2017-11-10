@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>APEX: Threading Component</title>
+</head>
+<body>
+<script>
+const Threading = require('../index');
+
+const t = () => {
+    on('upper', (data) => { emit('result', data.toUpperCase()); });
+    on('lower', (data) => { emit('result', data.toLowerCase()); });
+
+    on('prime', (max) => {
+        var sieve = [], i, j, primes = [];
+        for (i = 2; i <= max; ++i) {
+            if (!sieve[i]) {
+                // i has not been marked -- it is prime
+                primes.push(i);
+                for (j = i << 1; j <= max; j += i) {
+                    sieve[j] = true;
+                }
+            }
+        }
+        emit('result', primes);
+    });
+};
+
+Threading.ThreadPool.spawn('t1', t);
+Threading.ThreadPool.spawn('t2', t);
+Threading.ThreadPool.spawn('t3', t);
+Threading.ThreadPool.spawn('t4', t);
+
+Threading.ThreadPool.get('t1').on('result', (data) => { console.log('THREAD 1: ', data); });
+Threading.ThreadPool.get('t2').on('result', (data) => { console.log('THREAD 2: ', data); });
+Threading.ThreadPool.get('t3').on('result', (data) => { console.log('THREAD 3: ', data); });
+Threading.ThreadPool.get('t4').on('result', (data) => { console.log('THREAD 4: ', data); });
+
+function run () {
+    Threading.ThreadPool.get('t1').send('prime', 65535000);
+    Threading.ThreadPool.get('t2').send('prime', 65535000);
+    Threading.ThreadPool.get('t3').send('prime', 6553500);
+    Threading.ThreadPool.get('t4').send('prime', 6553500);
+};
+
+</script>
+</body>
+</html>
